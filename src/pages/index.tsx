@@ -47,16 +47,30 @@ export default function Home() {
     );
   }, [systemPrompt, koeiroParam, chatLog]);
 
-  const handleChangeChatLog = useCallback(
-    (targetIndex: number, text: string) => {
-      const newChatLog = chatLog.map((v: Message, i) => {
-        return i === targetIndex ? { role: v.role, content: text } : v;
-      });
+  const handleChangeAiKey = useCallback((v: string) => {
+    setGeminiApiKey(v);
+  }, []);
 
+  const handleChangeChatLog = useCallback(
+    (index: number, text: string) => {
+      const newChatLog = chatLog.map((log, i) => {
+        if (i === index) {
+          return { ...log, content: text };
+        }
+        return log;
+      });
       setChatLog(newChatLog);
     },
     [chatLog]
   );
+
+  const handleClickResetChatLog = useCallback(() => {
+    setChatLog([]);
+  }, []);
+
+  const handleClickResetSystemPrompt = useCallback(() => {
+    setSystemPrompt(SYSTEM_PROMPT);
+  }, []);
 
   /**
    * 文ごとに音声を直列でリクエストしながら再生する
@@ -67,7 +81,9 @@ export default function Home() {
       onStart?: () => void,
       onEnd?: () => void
     ) => {
-      speakCharacter(screenplay, viewer, koeiromapKey, onStart, onEnd);
+      if (koeiromapKey) {
+        speakCharacter(screenplay, viewer, koeiromapKey, onStart, onEnd);
+      }
     },
     [viewer, koeiromapKey]
   );
@@ -199,16 +215,19 @@ export default function Home() {
         onChatProcessStart={handleSendChat}
       />
       <Menu
-        openAiKey={geminiApiKey}
+        openAiKey={geminiApiKey ?? ""}
         systemPrompt={systemPrompt}
         chatLog={chatLog}
         koeiroParam={koeiroParam}
         assistantMessage={assistantMessage}
-        koeiromapKey={koeiromapKey}
+        koeiromapKey={koeiromapKey ?? ""}
         onChangeSystemPrompt={(v) => setSystemPrompt(v)}
+        onChangeAiKey={handleChangeAiKey}
+        onChangeChatLog={handleChangeChatLog}
         onChangeKoeiromapKey={(v) => setKoeiromapKey(v)}
-        koeiroParam={koeiroParam}
-        onChangeKoeiroParam={(v) => setKoeiroParam(v)}
+        onChangeKoeiromapParam={(v) => setKoeiroParam(v)}
+        handleClickResetChatLog={handleClickResetChatLog}
+        handleClickResetSystemPrompt={handleClickResetSystemPrompt}
       />
       {/* <GitHubLink /> */}
     </div>

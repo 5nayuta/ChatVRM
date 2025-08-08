@@ -33,9 +33,13 @@ const createSpeakCharacter = () => {
     prevSpeakPromise = Promise.all([fetchPromise, prevSpeakPromise]).then(
       ([audioBuffer]) => {
         onStart?.();
+
         if (!audioBuffer) {
+          console.warn("Audio buffer is null or undefined. Skipping speak.");
           return;
         }
+        console.log("Audio buffer is valid.");
+        console.log(`[speakCharacter] Calling viewer.model.speak with expression: ${screenplay.expression}`);
         return viewer.model?.speak(audioBuffer, screenplay);
       }
     );

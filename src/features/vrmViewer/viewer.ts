@@ -40,6 +40,7 @@ export class Viewer {
   }
 
   public loadVrm(url: string) {
+    // console.log("Viewer.loadVrm called with URL:", url);
     if (this.model?.vrm) {
       this.unloadVRM();
     }
@@ -47,8 +48,11 @@ export class Viewer {
     // gltf and vrm
     this.model = new Model(this._camera || new THREE.Object3D());
     this.model.loadVRM(url).then(async () => {
-      if (!this.model?.vrm) return;
-
+      // console.log("Model.loadVRM resolved successfully."); 
+      if (!this.model?.vrm) { 
+        console.warn("Model.vrm is null or undefined after loading.");
+        return;
+      }
       // Disable frustum culling
       this.model.vrm.scene.traverse((obj) => {
         obj.frustumCulled = false;
@@ -63,6 +67,8 @@ export class Viewer {
       requestAnimationFrame(() => {
         this.resetCamera();
       });
+    }).catch(error => {
+      console.error("Error loading VRM in Viewer:", error);
     });
   }
 

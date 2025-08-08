@@ -1,11 +1,16 @@
-import { GoogleGenerativeAI, GenerativeModel, StreamGenerateContentResponse } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel, GenerateContentResponse } from "@google/generative-ai";
 import { Message } from "../messages/messages";
 
 // OpenAIのMessage型をGeminiのContent型に変換するヘルパー関数
 const convertMessagesToGeminiContent = (messages: Message[]) => {
-  return messages.filter(message => message.role !== "system").map((message) => {
+  return messages.map((message) => {
+    let role: "user" | "model" = "user"; // デフォルトをuserに
+    if (message.role === "assistant") {
+      role = "model";
+    }
+    // systemロールのメッセージもuserロールとして送信
     return {
-      role: message.role === "user" ? "user" : "model", // Geminiのロールに合わせる
+      role: role,
       parts: [{ text: message.content }],
     };
   });
