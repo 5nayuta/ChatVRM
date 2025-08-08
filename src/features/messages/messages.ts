@@ -36,8 +36,24 @@ export type Screenplay = {
 };
 
 export const splitSentence = (text: string): string[] => {
-  const splitMessages = text.split(/(?<=[。．！？\n])/g);
-  return splitMessages.filter((msg) => msg !== "");
+  const sentences = text.split(/(?<=[。．！？\n])/g).filter((msg) => msg !== "");
+  const result: string[] = [];
+  const MAX_LENGTH = 60; // 60文字の制限
+
+  sentences.forEach((sentence) => {
+    let currentSentence = sentence;
+    while (currentSentence.length > MAX_LENGTH) {
+      // 60文字以内で、できるだけ自然な区切りを探す
+      // (スペース、句読点、または文字の区切り)
+      let sliceIndex = MAX_LENGTH;
+      // 日本語の場合は単語の区切りが難しいので、一旦単純に文字数で区切る
+      // 必要に応じて、より複雑なロジックを検討
+      result.push(currentSentence.substring(0, sliceIndex));
+      currentSentence = currentSentence.substring(sliceIndex);
+    }
+    result.push(currentSentence);
+  });
+  return result;
 };
 
 export const textsToScreenplay = (
@@ -76,14 +92,7 @@ export const textsToScreenplay = (
 };
 
 const emotionToTalkStyle = (emotion: EmotionType): TalkStyle => {
-  switch (emotion) {
-    case "angry":
-      return "angry";
-    case "happy":
-      return "happy";
-    case "sad":
-      return "sad";
-    default:
-      return "talk";
-  }
+  // koeiromapFreeV1は「talk」スタイルのみを無料でサポートしているため、
+  // その他の感情は「talk」にフォールバックさせる
+  return "talk";
 };

@@ -10,7 +10,7 @@ import { speakCharacter } from "@/features/messages/speakCharacter";
 import { MessageInputContainer } from "@/components/messageInputContainer";
 import { SYSTEM_PROMPT } from "@/features/constants/systemPromptConstants";
 import { KoeiroParam, DEFAULT_PARAM } from "@/features/constants/koeiroParam";
-import { getChatResponseStream } from "@/features/chat/openAiChat";
+import { getGeminiChatResponseStream } from "@/features/chat/geminiChat";
 import { Introduction } from "@/components/introduction";
 import { Menu } from "@/components/menu";
 import { GitHubLink } from "@/components/githubLink";
@@ -20,7 +20,7 @@ export default function Home() {
   const { viewer } = useContext(ViewerContext);
 
   const [systemPrompt, setSystemPrompt] = useState(SYSTEM_PROMPT);
-  const [openAiKey, setOpenAiKey] = useState(process.env.NEXT_PUBLIC_OPENAI_API_KEY);
+  const [geminiApiKey, setGeminiApiKey] = useState(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
   const [koeiromapKey, setKoeiromapKey] = useState(process.env.NEXT_PUBLIC_KOEIROMAP_API_KEY);
   const [koeiroParam, setKoeiroParam] = useState<KoeiroParam>(DEFAULT_PARAM);
   const [chatProcessing, setChatProcessing] = useState(false);
@@ -47,16 +47,30 @@ export default function Home() {
     );
   }, [systemPrompt, koeiroParam, chatLog]);
 
-  const handleChangeChatLog = useCallback(
-    (targetIndex: number, text: string) => {
-      const newChatLog = chatLog.map((v: Message, i) => {
-        return i === targetIndex ? { role: v.role, content: text } : v;
-      });
+  const handleChangeAiKey = useCallback((v: string) => {
+    setGeminiApiKey(v);
+  }, []);
 
+  const handleChangeChatLog = useCallback(
+    (index: number, text: string) => {
+      const newChatLog = chatLog.map((log, i) => {
+        if (i === index) {
+          return { ...log, content: text };
+        }
+        return log;
+      });
       setChatLog(newChatLog);
     },
     [chatLog]
   );
+
+  const handleClickResetChatLog = useCallback(() => {
+    setChatLog([]);
+  }, []);
+
+  const handleClickResetSystemPrompt = useCallback(() => {
+    setSystemPrompt(SYSTEM_PROMPT);
+  }, []);
 
   /**
    * 文ごとに音声を直列でリクエストしながら再生する
@@ -67,7 +81,9 @@ export default function Home() {
       onStart?: () => void,
       onEnd?: () => void
     ) => {
-      speakCharacter(screenplay, viewer, koeiromapKey, onStart, onEnd);
+      if (koeiromapKey) {
+        speakCharacter(screenplay, viewer, koeiromapKey, onStart, onEnd);
+      }
     },
     [viewer, koeiromapKey]
   );
@@ -77,7 +93,7 @@ export default function Home() {
    */
   const handleSendChat = useCallback(
     async (text: string) => {
-      if (!openAiKey) {
+      if (!geminiApiKey) {
         setAssistantMessage("APIキーが入力されていません");
         return;
       }
@@ -103,7 +119,7 @@ export default function Home() {
         ...messageLog,
       ];
 
-      const stream = await getChatResponseStream(messages, openAiKey).catch(
+      const stream = await getGeminiChatResponseStream(messages, geminiApiKey).catch(
         (e) => {
           console.error(e);
           return null;
@@ -181,7 +197,7 @@ export default function Home() {
       setChatLog(messageLogAssistant);
       setChatProcessing(false);
     },
-    [systemPrompt, chatLog, handleSpeakAi, openAiKey, koeiroParam]
+    [systemPrompt, chatLog, handleSpeakAi, geminiApiKey, koeiroParam]
   );
 
   return (
@@ -199,19 +215,19 @@ export default function Home() {
         onChatProcessStart={handleSendChat}
       />
       <Menu
-        openAiKey={openAiKey}
+        openAiKey={geminiApiKey ?? ""}
         systemPrompt={systemPrompt}
         chatLog={chatLog}
         koeiroParam={koeiroParam}
         assistantMessage={assistantMessage}
-        koeiromapKey={koeiromapKey}
-        onChangeAiKey={setOpenAiKey}
-        onChangeSystemPrompt={setSystemPrompt}
+        koeiromapKey={koeiromapKey ?? ""}
+        onChangeSystemPrompt={(v) => setSystemPrompt(v)}
+        onChangeAiKey={handleChangeAiKey}
         onChangeChatLog={handleChangeChatLog}
-        onChangeKoeiromapParam={setKoeiroParam}
-        handleClickResetChatLog={() => setChatLog([])}
-        handleClickResetSystemPrompt={() => setSystemPrompt(SYSTEM_PROMPT)}
-        onChangeKoeiromapKey={setKoeiromapKey}
+        onChangeKoeiromapKey={(v) => setKoeiromapKey(v)}
+        onChangeKoeiromapParam={(v) => setKoeiroParam(v)}
+        handleClickResetChatLog={handleClickResetChatLog}
+        handleClickResetSystemPrompt={handleClickResetSystemPrompt}
       />
       {/* <GitHubLink /> */}
     </div>

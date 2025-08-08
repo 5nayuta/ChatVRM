@@ -70,7 +70,12 @@ export class Model {
    * 音声を再生し、リップシンクを行う
    */
   public async speak(buffer: ArrayBuffer, screenplay: Screenplay) {
-    this.emoteController?.playEmotion(screenplay.expression);
+    if (!this.emoteController) {
+      console.warn("[Model] EmoteController is not initialized.");
+      return;
+    }
+    // console.log(`[Model] Calling playEmotion from Model with expression: ${screenplay.expression}`);
+    this.emoteController.playEmotion(screenplay.expression);
     await new Promise((resolve) => {
       this._lipSync?.playFromArrayBuffer(buffer, () => {
         resolve(true);

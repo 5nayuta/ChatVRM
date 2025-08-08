@@ -29,24 +29,32 @@ export class ExpressionController {
     if (vrm.expressionManager) {
       this._expressionManager = vrm.expressionManager;
       this._autoBlink = new AutoBlink(vrm.expressionManager);
+      console.log("VRMExpressionManager is initialized:", this._expressionManager);
+    } else {
+      console.warn("VRMExpressionManager is NOT found on this VRM model.");
     }
   }
 
   public playEmotion(preset: VRMExpressionPresetName) {
+    // console.log(`[ExpressionController] Calling playEmotion with preset: ${preset}`);
     if (this._currentEmotion != "neutral") {
       this._expressionManager?.setValue(this._currentEmotion, 0);
+      console.log(`[ExpressionController] Resetting ${this._currentEmotion} to 0`);
     }
 
     if (preset == "neutral") {
       this._autoBlink?.setEnable(true);
       this._currentEmotion = preset;
+      console.log(`[ExpressionController] Set currentEmotion to neutral. AutoBlink enabled.`);
       return;
     }
 
     const t = this._autoBlink?.setEnable(false) || 0;
     this._currentEmotion = preset;
+    console.log(`[ExpressionController] Set currentEmotion to ${preset}. AutoBlink disabled.`);
     setTimeout(() => {
       this._expressionManager?.setValue(preset, 1);
+      console.log(`[ExpressionController] Applied preset ${preset} with value 1 after timeout.`);
     }, t * 1000);
   }
 
@@ -58,6 +66,7 @@ export class ExpressionController {
       preset,
       value,
     };
+    // console.log(`[ExpressionController] LipSync set to ${preset} with value ${value}`); // 頻繁なログなのでコメントアウト
   }
 
   public update(delta: number) {
@@ -71,6 +80,8 @@ export class ExpressionController {
           ? this._currentLipSync.value * 0.5
           : this._currentLipSync.value * 0.25;
       this._expressionManager?.setValue(this._currentLipSync.preset, weight);
+      // console.log(`[ExpressionController] Update: LipSync applying ${this._currentLipSync.preset} with weight ${weight}`); // 頻繁なログなのでコメントアウト
     }
+    // console.log(`[ExpressionController] Update called. Delta: ${delta}`); // 頻繁なログなのでコメントアウト
   }
 }
